@@ -1,34 +1,18 @@
 window.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    // Timer
     const countTimer = deadline => {
         const timerHours = document.querySelector('#timer-hours'),
             timerMinutes = document.querySelector('#timer-minutes'),
             timerSeconds = document.querySelector('#timer-seconds');
 
-        let clockId;
-
         const getTimeRemaining = () => {
-
-            const addZero = number => {
-                const strNumber = number.toString();
-
-                if (strNumber.length === 1) {
-                    return `0` + strNumber;
-                } else {
-                    return strNumber;
-                }
-            };
-
             const dateStop = new Date(deadline).getTime(),
                 dateNow = new Date().getTime(),
                 timeRemaining = (dateStop - dateNow) / 1000,
-                seconds = addZero(Math.floor(timeRemaining % 60)),
-                minutes = addZero(Math.floor((timeRemaining / 60) % 60)),
-                hours = addZero(Math.floor(timeRemaining / 60 / 60));
-            // day = Math.floor(timeRemaining / 60 / 60 / 24);
-
+                seconds = Math.floor(timeRemaining % 60),
+                minutes = Math.floor((timeRemaining / 60) % 60),
+                hours = Math.floor(timeRemaining / 60 / 60);
             return {
                 timeRemaining,
                 hours,
@@ -40,148 +24,125 @@ window.addEventListener('DOMContentLoaded', () => {
         const updateClock = () => {
             const timer = getTimeRemaining();
 
-            timerHours.textContent = timer.hours;
-            timerMinutes.textContent = timer.minutes;
-            timerSeconds.textContent = timer.seconds;
+            timerHours.textContent = timer.hours < 10 ? "0" + timer.hours : timer.hours;
+            timerMinutes.textContent = timer.minutes < 10 ? "0" + timer.minutes : timer.minutes;
+            timerSeconds.textContent = timer.seconds < 10 ? "0" + timer.seconds : timer.seconds;
 
-            if (timer.timeRemaining <= 0) {
-                clearInterval(clockId);
+            if (timer.timeRemaining < 0) {
                 timerHours.textContent = '00';
                 timerMinutes.textContent = '00';
                 timerSeconds.textContent = '00';
             }
-
         };
+        updateClock();
+        setInterval(updateClock, 1000);
 
-        clockId = setInterval(updateClock, 1000);
     };
+    countTimer('20 april 2020');
 
-    countTimer('12 mar 2020');
+    const toogleMenu = () => {
+        const btnMenu = document.querySelector('.menu'),
+            menu = document.querySelector('menu'),
+            handlerMenu = () => menu.classList.toggle('active-menu');
 
+        menu.addEventListener('click', event => {
+            const {
+                target
+            } = event;
 
-    // menu
-    const toggleMenu = () => {
-        const menu = document.querySelector('menu'),
-            body = document.querySelector('body');
-
-        const handlerMenu = () => {
-            menu.classList.toggle('active-menu');
-        };
-
-        body.addEventListener('click', event => {
-
-            const target = event.target;
-
-            if (target.closest('.menu')) {
-                handlerMenu();
-                return;
-            }
-
-            if (target.closest('menu') && target.matches('a')) {
-                event.preventDefault();
-                handlerMenu();
-                const href = target.getAttribute('href');
-
-                if (href !== '#close') {
-                    document.querySelector(`${href}`).scrollIntoView({
-                        behavior: "smooth",
-                        block: "start",
-                    });
-                }
-                return;
-            }
-
-            if (!target.closest('menu') && menu.classList.contains('active-menu')) {
-                handlerMenu();
-            }
-        });
-    };
-
-    toggleMenu();
-
-    // кнопка scroll
-    const scroll = () => {
-        const scrollBtn = document.querySelector('a');
-        scrollBtn.addEventListener('click', event => {
-            event.preventDefault();
-            document.querySelector('#service-block').scrollIntoView({
-                behavior: "smooth",
-                block: "start",
-            });
+            if (target.closest('a')) handlerMenu();
         });
 
+        btnMenu.addEventListener('click', handlerMenu);
     };
+    toogleMenu();
 
-    scroll();
+    //popup
 
-    // popup
-    const togglePopup = () => {
-        const popup = document.querySelector('.popup'),
-            popupBtn = document.querySelectorAll('.popup-btn'),
-            popupContent = document.querySelector('.popup-content');
+    const tooglePopUp = () => {
+        const popUp = document.querySelector(".popup"),
+            popUpBtn = document.querySelectorAll(".popup-btn"),
+            popUpContent = document.querySelector(".popup-content");
 
-        let moveId, count;
+        popUpBtn.forEach(elem => elem.addEventListener('click', () => {
+            popUp.style.display = "block";
+            popUpContent.style.opacity = "0";
 
-        const movePopup = () => {
-            moveId = requestAnimationFrame(movePopup);
 
-            count += 5;
-
-            if (popupContent.style.top !== '10%') {
-                popupContent.style.top = `${count}%`;
+            if (screen.width > 768) {
+                animate({
+                    duration: 1000,
+                    timing(timeFraction) {
+                        return timeFraction;
+                    },
+                    draw(progress) {
+                        const progressPopUp = Math.floor(progress * 100) / 100;
+                        popUpContent.style.opacity = `${progressPopUp}`;
+                    }
+                });
             } else {
-                cancelAnimationFrame(moveId);
+                popUp.style.display = "block";
+                popUpContent.style.opacity = "1";
             }
 
-        };
 
-        popupBtn.forEach(elem => {
-            elem.addEventListener('click', () => {
-                if (document.documentElement.clientWidth > 768) {
-                    popupContent.style.top = `-100%`;
-                    count = -100;
-                    popup.style.display = 'block';
-                    movePopup();
-                } else {
-                    popup.style.display = 'block';
-                }
-            });
-        });
+        }));
 
-        popup.addEventListener('click', event => {
+        popUp.addEventListener('click', event => {
             let target = event.target;
+
             if (target.classList.contains('popup-close')) {
-                popup.style.display = 'none';
+                popUp.style.display = "none";
             } else {
                 target = target.closest('.popup-content');
                 if (!target) {
-                    popup.style.display = 'none';
+                    popUp.style.display = "none";
                 }
             }
+
         });
 
+        function animate({
+            timing,
+            draw,
+            duration
+        }) {
+            const start = performance.now();
+
+            requestAnimationFrame(function animate(time) {
+                let timeFraction = (time - start) / duration;
+                if (timeFraction > 1) timeFraction = 1;
+
+                const progress = timing(timeFraction);
+
+                draw(progress);
+
+                if (timeFraction < 1) {
+                    requestAnimationFrame(animate);
+                }
+            });
+        }
     };
+    tooglePopUp();
 
-    togglePopup();
+    //табы
 
-    // tabs
     const tabs = () => {
         const tabHeader = document.querySelector('.service-header'),
             tab = tabHeader.querySelectorAll('.service-header-tab'),
             tabContent = document.querySelectorAll('.service-tab');
-
-        const toggleTabContent = index => {
+        const toogleTabContent = (index => {
             for (let i = 0; i < tabContent.length; i++) {
                 if (index === i) {
                     tab[i].classList.add('active');
                     tabContent[i].classList.remove('d-none');
                 } else {
                     tab[i].classList.remove('active');
-                    tabContent[i].classList.add('d-none');
+                    tabContent[i].classList.add("d-none");
                 }
-            }
-        };
 
+            }
+        });
         tabHeader.addEventListener('click', event => {
             let target = event.target;
             target = target.closest('.service-header-tab');
@@ -189,43 +150,38 @@ window.addEventListener('DOMContentLoaded', () => {
             if (target) {
                 tab.forEach((item, i) => {
                     if (item === target) {
-                        toggleTabContent(i);
+                        toogleTabContent(i);
+
                     }
                 });
             }
         });
-    };
 
+    };
     tabs();
 
-    // add dots in slider
+    //слайдер
 
-
-
-    // slider
     const slider = () => {
         const slide = document.querySelectorAll('.portfolio-item'),
-            slider = document.querySelector('.portfolio-content');
+            btn = document.querySelectorAll('.portfolio-btn'),
+            slider = document.querySelector('.portfolio-content'),
 
-        let currentSlide = 0,
-            interval;
-
-        const addDots = () => {
-            const dotsConteiner = document.querySelector('.portfolio-dots');
-
-            for (let i = 0; i < slide.length; i++) {
-                const li = document.createElement('li');
-                li.classList.add('dot');
-
-                if (i === 0) {
-                    li.classList.add('dot-active');
-                }
-                dotsConteiner.appendChild(li);
+            dots = document.createElement("ul");
+        dots.classList.add("portfolio-dots");
+        slider.append(dots);
+        for (let i = 0; i < slide.length; i++) {
+            const oneDot = document.createElement("li");
+            oneDot.classList.add("dot");
+            dots.append(oneDot);
+            if (i == 0) {
+                oneDot.classList.add("dot-active");
             }
-        };
-
-        addDots();
+        }
         const dot = document.querySelectorAll('.dot');
+
+        let curentSlide = 0,
+            interval;
 
         const prevSlide = (elem, index, strClass) => {
             elem[index].classList.remove(strClass);
@@ -236,15 +192,14 @@ window.addEventListener('DOMContentLoaded', () => {
         };
 
         const autoPlaySlide = () => {
-
-            prevSlide(slide, currentSlide, 'portfolio-item-active');
-            prevSlide(dot, currentSlide, 'dot-active');
-            currentSlide++;
-            if (currentSlide >= slide.length) {
-                currentSlide = 0;
+            prevSlide(slide, curentSlide, 'portfolio-item-active');
+            prevSlide(dot, curentSlide, "dot-active");
+            curentSlide++;
+            if (curentSlide >= slide.length) {
+                curentSlide = 0;
             }
-            nextSlide(slide, currentSlide, 'portfolio-item-active');
-            nextSlide(dot, currentSlide, 'dot-active');
+            nextSlide(slide, curentSlide, "portfolio-item-active");
+            nextSlide(dot, curentSlide, "dot-active");
         };
 
         const startSlide = (time = 3000) => {
@@ -260,105 +215,78 @@ window.addEventListener('DOMContentLoaded', () => {
 
             const target = event.target;
 
-            if (!target.matches('.portfolio-btn, .dot')) {
-                return;
-            }
+            // if (!target.matches(".portfolio-btn", ".dot")) {
+            //   return;
+            // }
 
-            prevSlide(slide, currentSlide, 'portfolio-item-active');
-            prevSlide(dot, currentSlide, 'dot-active');
+            prevSlide(slide, curentSlide, "portfolio-item-active");
+            prevSlide(dot, curentSlide, "dot-active");
 
             if (target.matches('#arrow-right')) {
-                currentSlide++;
+                curentSlide++;
             } else if (target.matches('#arrow-left')) {
-                currentSlide--;
-            } else if (target.matches('.dot')) {
+                curentSlide--;
+            } else if (target.classList.contains('dot')) {
                 dot.forEach((elem, index) => {
                     if (elem === target) {
-                        currentSlide = index;
+                        curentSlide = index;
                     }
                 });
             }
 
-            if (currentSlide >= slide.length) {
-                currentSlide = 0;
+
+
+            if (curentSlide >= slide.length) {
+                curentSlide = 0;
             }
-            if (currentSlide < 0) {
-                currentSlide = slide.length - 1;
+            if (curentSlide < 0) {
+                curentSlide = slide.length - 1;
             }
 
-            nextSlide(slide, currentSlide, 'portfolio-item-active');
-            nextSlide(dot, currentSlide, 'dot-active');
+            nextSlide(slide, curentSlide, "portfolio-item-active");
+            nextSlide(dot, curentSlide, "dot-active");
 
         });
 
         slider.addEventListener('mouseover', event => {
-            if (event.target.matches('.portfolio-btn') ||
-                event.target.matches('.dot')) {
+            if (event.target.matches('.portfolio-btn') || event.target.matches('.dot')) {
                 stopSlide();
             }
         });
 
         slider.addEventListener('mouseout', event => {
-            if (event.target.matches('.portfolio-btn') ||
-                event.target.matches('.dot')) {
-                startSlide(1500);
+            if (event.target.matches('.portfolio-btn') || event.target.matches('.dot')) {
+                startSlide();
             }
         });
 
-
         startSlide(1500);
-
     };
 
     slider();
 
-    // смена картинок в "Наша команда"
-    const switchImg = () => {
-        const container = document.querySelector('.command');
+    const myTeam = () => {
+        const teamImg = document.querySelectorAll(".command__photo");
 
-        const switcher = target => {
-            const src = target.src;
-            target.src = target.dataset.img;
-            target.dataset.img = src;
-        };
-
-        container.addEventListener('mouseover', event => {
-            const target = event.target;
-
-            if (target.matches('img')) {
-                switcher(target);
-            }
-
+        teamImg.forEach(item => {
+            const defaultItemSrc = item.src;
+            item.addEventListener("mouseenter", event => {
+                event.target.src = event.target.dataset.img;
+            });
+            item.addEventListener("mouseleave", event => {
+                event.target.src = defaultItemSrc;
+            });
         });
-
-        container.addEventListener('mouseout', event => {
-            const target = event.target;
-            if (target.matches('img')) {
-                switcher(target);
-            }
-        });
-
     };
+    myTeam();
 
-    switchImg();
-
-    // calculator
-    const calculator = price => {
+    const calc = (price = 100) => {
         const calcBlock = document.querySelector('.calc-block'),
             calcType = document.querySelector('.calc-type'),
             calcSquare = document.querySelector('.calc-square'),
-            calcDay = document.querySelector('.calc-day'),
             calcCount = document.querySelector('.calc-count'),
+            calcDay = document.querySelector('.calc-day'),
             totalValue = document.getElementById('total');
-
-        calcBlock.addEventListener('input', event => {
-            const target = event.target;
-
-            if (target.matches('input')) {
-                target.value = target.value.replace(/[^\d,]/g, '');
-            }
-        });
-
 
         const countSum = () => {
 
@@ -381,9 +309,9 @@ window.addEventListener('DOMContentLoaded', () => {
             }
             if (calcDay.value && calcDay.value == 0) {
                 dayValue = 0;
-            } else if (calcDay.value && calcDay.value < 5) {
+            } else if (calcDay.value && calcDay.value !== 0 && calcDay.value < 5) {
                 dayValue *= 2;
-            } else if (calcDay.value && calcDay.value < 10) {
+            } else if (calcDay.value && calcDay.value !== 0 && calcDay.value < 10) {
                 dayValue *= 1.5;
             }
 
@@ -395,104 +323,112 @@ window.addEventListener('DOMContentLoaded', () => {
 
         };
 
-        calcBlock.addEventListener('change', event => {
+        calcBlock.addEventListener('input', event => {
             const target = event.target;
 
-            if (target.matches('.calc-type') || target.matches('.calc-square') ||
-                target.matches('.calc-day') || target.matches('.calc-count')) {
+            if (target.matches('select') || target.matches('input')) {
                 countSum();
             }
-
         });
-    };
-    calculator(100);
-
-    //send-ajax-form
-
-    const sendForm = () => {
-        const errorMessage = 'Что-то пошло не так...',
-            loadMessage = 'Загрузка...',
-            successMessage = 'Спасибо! Мы скоро с вами свяжемся!';
-
-        const postData = (body, outputData, errorData) => {
-            const request = new XMLHttpRequest();
-            request.addEventListener('readystatechange', () => {
-
-                if (request.readyState !== 4) {
-                    return;
-                }
-
-                if (request.status === 200) {
-                    outputData();
-                } else {
-                    errorData(request.status);
-                }
-            });
 
 
-            request.open('POST', './server.php');
-            request.setRequestHeader('Content-Type', 'application/json');
 
-
-            request.send(JSON.stringify(body));
-        };
-
-
-        const statusMessage = document.createElement('div');
-        statusMessage.style.cssText = `font-size: 2rem;
-        color: #fff`;
-
-        // запрет ввода неккоректных данных
-        document.body.addEventListener('input', event => {
-            const target = event.target;
-
-            if (target.closest('input')) {
-                if (target.getAttribute('name') === 'user_name' || target.matches('.mess')) {
-                    target.value = target.value.replace(/[^а-яё ]/ig, '');
-                }
-
-                if (target.getAttribute('type') === 'email') {
-                    target.value = target.value.replace(/[^a-z@\.]/ig, '');
-                }
-
-                if (target.getAttribute('type') === 'tel') {
-                    target.value = target.value.replace(/[^+0-9]/ig, '');
-                }
+        calcBlock.addEventListener('input', e => {
+            const target = e.target;
+            if (
+                target.closest(".calc-square") ||
+          target.closest(".calc-count") ||
+          target.closest(".calc-day")
+            ) {
+                target.value = target.value.replace(/\D/g, '');
             }
         });
 
-        // отправка формы
-        document.body.addEventListener('submit', event => {
-            const target = event.target;
-            if (target.closest('form')) {
-                event.preventDefault();
-                const form = target.closest('form');
+    };
+    calc(100);
+});
 
-                form.appendChild(statusMessage);
-                statusMessage.textContent = loadMessage;
+//send-ajax-form
 
-                const formData = new FormData(form);
+const sendForm = () => {
 
-                const body = {};
+    const errorMessage = ' Что то пошло не так...',
+        loadMessage = 'Загрузка...',
+        successMessage = 'Спасибо! Мы скоро с вами свяжемся!',
+        statusMessage = document.createElement('div');
+    statusMessage.style.cssText = 'font-size: 2rem;';
 
-                formData.forEach((val, key) => {
-                    body[key] = val;
-                });
 
-                postData(body, () => {
+    const allForms = document.querySelectorAll('form');
+
+
+    const postData = body => new Promise((resolve, reject) => {
+        const request = new XMLHttpRequest();
+        request.addEventListener("readystatechange", () => {
+            if (request.readyState !== 4) {
+                return;
+            }
+            if (request.status === 200) {
+                resolve();
+            } else {
+                reject();
+            }
+        });
+
+        request.open("POST", "./server.php");
+        request.setRequestHeader("Content-Type", "application/json");
+
+        request.send(JSON.stringify(body));
+    });
+
+
+
+    allForms.forEach(item => {
+        const inputs = item.querySelectorAll("input");
+        item.addEventListener("submit", event => {
+            event.preventDefault();
+            item.appendChild(statusMessage);
+            statusMessage.textContent = loadMessage;
+            if (item.getAttribute("id") == 'form3') {
+                statusMessage.style.cssText = 'color:#ffffff';
+            }
+            const formData = new FormData(item);
+            const body = {};
+            formData.forEach((val, key) => {
+                body[key] = val;
+            });
+            postData(body)
+                .then(() => {
                     statusMessage.textContent = successMessage;
-                }, error => {
-                    console.error(error);
+                    inputs.forEach(itemInput => (itemInput.value = ""));
+                })
+                .catch(() => {
                     statusMessage.textContent = errorMessage;
                 });
 
-                form.reset();
 
-            }
+
         });
+        inputs.forEach(itemInput => {
+            itemInput.value = "";
+            itemInput.addEventListener("input", e => {
+                const target = e.target;
+
+                if (
+                    target.getAttribute("name") == "user_name" ||
+            target.getAttribute("name") == "user_message"
+                ) {
+                    target.value = target.value.replace(/[^\W]/gi, "");
+                } else if (target.getAttribute("name") == "user_email") {
+                    target.value = target.value.replace(/.+@.+\..{1,}&/i, "");
+                } else if (target.getAttribute("name") == "user_phone") {
+                    target.value = target.value.replace(/\+[\d]/g, "");
+                }
+            });
+        });
+    });
 
 
-    };
 
-    sendForm();
-});
+};
+sendForm();
