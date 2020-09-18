@@ -1,5 +1,5 @@
 window.addEventListener('DOMContentLoaded', () => {
-
+    'use strict';
 
     const countTimer = deadline => {
         const timerHours = document.querySelector('#timer-hours'),
@@ -38,7 +38,7 @@ window.addEventListener('DOMContentLoaded', () => {
         setInterval(updateClock, 1000);
 
     };
-    countTimer('20 march 2020');
+    countTimer('20 april 2020');
 
     const toogleMenu = () => {
         const btnMenu = document.querySelector('.menu'),
@@ -215,9 +215,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
             const target = event.target;
 
-            if (!target.matches(".portfolio-btn", ".dot")) {
-                return;
-            }
+            // if (!target.matches(".portfolio-btn", ".dot")) {
+            //   return;
+            // }
 
             prevSlide(slide, curentSlide, "portfolio-item-active");
             prevSlide(dot, curentSlide, "dot-active");
@@ -226,14 +226,15 @@ window.addEventListener('DOMContentLoaded', () => {
                 curentSlide++;
             } else if (target.matches('#arrow-left')) {
                 curentSlide--;
-                console.log(slide.length);
-            } else if (target.matches('.dot')) {
+            } else if (target.classList.contains('dot')) {
                 dot.forEach((elem, index) => {
                     if (elem === target) {
                         curentSlide = index;
                     }
                 });
             }
+
+
 
             if (curentSlide >= slide.length) {
                 curentSlide = 0;
@@ -297,18 +298,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
             if (calcCount.value > 1) {
                 countValue += (calcCount.value - 1) / 10;
-            } else if (calcCount.value && calcCount.value == 0) {
-                countValue = 0;
             }
 
-            if (calcCount.value > 1) {
-                countValue += (calcCount.value - 1) / 10;
-            } else if (calcCount.value && calcCount.value == 0) {
-                countValue = 0;
-            }
-            if (calcDay.value && calcDay.value == 0) {
-                dayValue = 0;
-            } else if (calcDay.value && calcDay.value < 5) {
+            if (calcDay.value && calcDay.value < 5) {
                 dayValue *= 2;
             } else if (calcDay.value && calcDay.value < 10) {
                 dayValue *= 1.5;
@@ -318,7 +310,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 total = price * typeValue * squareValue * countValue * dayValue;
             }
 
-            totalValue.textContent = total;
+            totalValue.textContent = Math.ceil(total);
 
         };
 
@@ -336,8 +328,8 @@ window.addEventListener('DOMContentLoaded', () => {
             const target = e.target;
             if (
                 target.closest(".calc-square") ||
-          target.closest(".calc-count") ||
-          target.closest(".calc-day")
+        target.closest(".calc-count") ||
+        target.closest(".calc-day")
             ) {
                 target.value = target.value.replace(/\D/g, '');
             }
@@ -345,92 +337,97 @@ window.addEventListener('DOMContentLoaded', () => {
 
     };
     calc(100);
-
-    const sendForm = () => {
-
-        const errorMessage = ' Что то пошло не так...',
-            loadMessage = 'Загрузка...',
-            successMessage = 'Спасибо! Мы скоро с вами свяжемся!',
-            statusMessage = document.createElement('div');
-        statusMessage.style.cssText = 'font-size: 2rem;';
-    
-    
-        const allForms = document.querySelectorAll('form');
-    
-    
-        const postData = body => new Promise((resolve, reject) => {
-            const request = new XMLHttpRequest();
-            request.addEventListener("readystatechange", () => {
-                if (request.readyState !== 4) {
-                    return;
-                }
-                if (request.status === 200) {
-                    resolve();
-                } else {
-                    reject();
-                }
-            });
-    
-            request.open("POST", "./server.php");
-            request.setRequestHeader("Content-Type", "application/json");
-    
-            request.send(JSON.stringify(body));
-        });
-    
-    
-    
-        allForms.forEach(item => {
-            const inputs = item.querySelectorAll("input");
-            item.addEventListener("submit", event => {
-                event.preventDefault();
-                item.appendChild(statusMessage);
-                statusMessage.textContent = loadMessage;
-                if (item.getAttribute("id") == 'form3') {
-                    statusMessage.style.cssText = 'color:#ffffff';
-                }
-                const formData = new FormData(item);
-                const body = {};
-                formData.forEach((val, key) => {
-                    body[key] = val;
-                });
-                postData(body)
-                    .then(() => {
-                        statusMessage.textContent = successMessage;
-                        inputs.forEach(itemInput => (itemInput.value = ""));
-                    })
-                    .catch(() => {
-                        statusMessage.textContent = errorMessage;
-                    });
-    
-    
-    
-            });
-            inputs.forEach(itemInput => {
-                itemInput.value = "";
-                itemInput.addEventListener("input", e => {
-                    const target = e.target;
-    
-                    if (
-                        target.getAttribute("name") == "user_name" ||
-                target.getAttribute("name") == "user_message"
-                    ) {
-                        target.value = target.value.replace(/[^\W]/gi, "");
-                    } else if (target.getAttribute("name") == "user_email") {
-                        target.value = target.value.replace(/.+@.+\..{1,}&/i, "");
-                    } else if (target.getAttribute("name") == "user_phone") {
-                        target.value = target.value.replace(/\+[\d]/g, "");
-                    }
-                });
-            });
-        });
-    
-    
-    
-    };
-    sendForm();
-
 });
 
 //send-ajax-form
 
+const sendForm = () => {
 
+    const errorMessage = ' Что то пошло не так...',
+        loadMessage = 'Загрузка...',
+        successMessage = 'Спасибо! Мы скоро с вами свяжемся!',
+        statusMessage = document.createElement('div');
+    statusMessage.style.cssText = 'font-size: 2rem;';
+
+
+    const allForms = document.querySelectorAll('form');
+
+
+    const postData = body => fetch("./server.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+    });
+
+    document.body.addEventListener('input', event => {
+        const target = event.target;
+
+        if (target.closest('input')) {
+            if (target.getAttribute('name') === 'user_name' || target.matches('.mess')) {
+                target.value = target.value.replace(/[^а-яё ]/ig, '');
+            }
+
+            if (target.getAttribute('type') === 'email') {
+                target.value = target.value.replace(/[^a-z@\.]/ig, '');
+            }
+
+            if (target.getAttribute('type') === 'tel') {
+                target.value = target.value.replace(/[^+0-9]/ig, '');
+            }
+        }
+    });
+
+    allForms.forEach(item => {
+        const inputs = item.querySelectorAll("input");
+        item.addEventListener("submit", event => {
+            event.preventDefault();
+            item.appendChild(statusMessage);
+            statusMessage.textContent = loadMessage;
+            if (item.getAttribute("id") == 'form3') {
+                statusMessage.style.cssText = 'color:#ffffff';
+            }
+            const formData = new FormData(item);
+            const body = {};
+            formData.forEach((val, key) => {
+                body[key] = val;
+            });
+            postData(body)
+                .then(response => {
+                    if (response.status !== 200) {
+                        throw new Error('status network not 200');
+                    }
+                    statusMessage.textContent = successMessage;
+                    inputs.forEach(itemInput => (itemInput.value = ""));
+                })
+                .catch(() => {
+                    statusMessage.textContent = errorMessage;
+                });
+
+
+
+        });
+        inputs.forEach(itemInput => {
+            itemInput.value = "";
+            itemInput.addEventListener("input", e => {
+                const target = e.target;
+
+                if (
+                    target.getAttribute("name") == "user_name" ||
+          target.getAttribute("name") == "user_message"
+                ) {
+                    target.value = target.value.replace(/[^\W]/gi, "");
+                } else if (target.getAttribute("name") == "user_email") {
+                    target.value = target.value.replace(/.+@.+\..{1,}&/i, "");
+                } else if (target.getAttribute("name") == "user_phone") {
+                    target.value = target.value.replace(/\+[\d]/g, "");
+                }
+            });
+        });
+    });
+
+
+
+};
+sendForm();
