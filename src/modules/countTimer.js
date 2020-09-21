@@ -1,4 +1,4 @@
-const countTimer = (deadline = '20 sept 2022') => {
+const countTimer = (deadline = '22 sept 2022') => {
   const timerHours = document.querySelector("#timer-hours"),
     timerMinutes = document.querySelector("#timer-minutes"),
     timerSeconds = document.querySelector("#timer-seconds");
